@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">🛡️</div>
+      <span class="logo-name">Spam<em>Guard</em></span>
+    </div>
+    <button id="extThemeToggle" class="theme-btn" title="Toggle theme">
+      <span class="sun-icon">☀️</span>
+      <span class="moon-icon hidden">🌙</span>
+    </button>
+  </div>
+  
+  <div class="container">
+    <!-- Gmail Auto-Scan Toggle Setting -->
+    <div class="settings-box">
+      <div class="settings-text">
+        <div class="settings-title">Gmail Auto-Scan</div>
+        <div class="settings-desc">Intelligent threat detection in real-time.</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="autoScanToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="divider">Manual Analysis</div>
+
+    <div class="form-group">
+      <textarea id="messageInput" placeholder="Paste message content to analyze…" rows="4" maxlength="5000"></textarea>
+    </div>
+    
+    <button id="analyzeBtn" class="btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Run Analysis
+    </button>
+    
+    <div id="loading" class="hidden">
+      <div class="spinner"></div> Analyzing Intelligence...
+    </div>
+
+    <div id="resultBox" class="result-box hidden">
+      <div id="verdict" class="verdict"></div>
+      <div id="confidence" class="confidence"></div>
+    </div>
+    
+    <div id="errorBox" class="error-box hidden"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

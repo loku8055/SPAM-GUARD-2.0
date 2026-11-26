@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SpamGuard — AI Threat Intelligence{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #060a12;
+            --bg-1:      #0b1120;
+            --bg-2:      #101828;
+            --bg-3:      #151f30;
+            --border:    rgba(255,255,255,0.06);
+            --border-2:  rgba(255,255,255,0.1);
+            --text:      #e2e8f4;
+            --text-2:    #8a9ab8;
+            --text-3:    #4a5a72;
+            --accent:    #0ea5e9;
+            --accent-2:  #38bdf8;
+            --accent-glow: rgba(14,165,233,0.2);
+            --spam:      #f43f5e;
+            --spam-dim:  rgba(244,63,94,0.12);
+            --spam-glow: rgba(244,63,94,0.25);
+            --ham:       #10d9a0;
+            --ham-dim:   rgba(16,217,160,0.1);
+            --ham-glow:  rgba(16,217,160,0.25);
+            --mono: 'IBM Plex Mono', monospace;
+            --display: 'Syne', sans-serif;
+            --body: 'Outfit', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ─── Ambient Background ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 15% 20%, rgba(14,165,233,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 800px at 85% 80%, rgba(16,217,160,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Subtle grid */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(14,165,233,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14,165,233,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── Navigation ─── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: rgba(6,10,18,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .logo-mark {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 16px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .logo-name {
+            font-family: var(--display);
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .logo-name em {
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-link {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-2);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            letter-spacing: 0.3px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .nav-link:hover, .nav-link.active { color: var(--text); background: var(--bg-3); }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-user {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-3);
+            letter-spacing: 0.5px;
+            padding: 0 4px;
+        }
+
+        .btn {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-2);
+            border: 1px solid var(--border-2);
+        }
+        .btn-ghost:hover { background: var(--bg-3); color: var(--text); }
+        .btn-accent {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .btn-accent:hover {
+            background: var(--accent-2);
+            box-shadow: 0 0 30px rgba(14,165,233,0.4);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* ─── Main container ─── */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .card:hover { border-color: var(--border-2); }
+        .card-pad { padding: 28px; }
+
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+        .live-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--ham);
+            box-shadow: 0 0 6px var(--ham-glow);
+            animation: blink 2.5s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ─── Forms ─── */
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-3);
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border-2);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--body);
+            font-size: 15px;
+            padding: 12px 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-input::placeholder { color: var(--text-3); }
+
+        /* ─── Tags / Badges ─── */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 3px 9px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+        .tag-spam { background: var(--spam-dim); color: var(--spam); border: 1px solid rgba(244,63,94,0.2); }
+        .tag-ham  { background: var(--ham-dim);  color: var(--ham);  border: 1px solid rgba(16,217,160,0.2); }
+
+        /* ─── Page entry animation ─── */
+        .page-enter {
+            animation: pageEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes pageEnter {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stagger helpers */
+        .s1 { animation-delay: 0.05s; }
+        .s2 { animation-delay: 0.12s; }
+        .s3 { animation-delay: 0.2s; }
+        .s4 { animation-delay: 0.28s; }
+
+        /* ─── Error list ─── */
+        ul.errorlist {
+            list-style: none;
+            color: var(--spam);
+            font-size: 12px;
+            font-family: var(--mono);
+            margin-bottom: 6px;
+        }
+
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 640px) {
+            .nav-center { display: none; }
+            .nav-user { display: none; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <a href="{% url 'home' %}" class="logo">
+            <div class="logo-mark">🛡️</div>
+            <span class="logo-name">Spam<em>Guard</em></span>
+        </a>
+
+        <div class="nav-center">
+            <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'predict' %}" class="nav-link">Analyzer</a>
+            {% endif %}
+        </div>
+
+        <div class="nav-right">
+            {% if user.is_authenticated %}
+                <span class="nav-user">{{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost">Sign out</button>
+                </form>
+                <a href="{% url 'predict' %}" class="btn btn-accent">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                    Analyze
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-accent">Get Started</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container" style="padding-top: 40px; padding-bottom: 60px;">
+    {% block content %}{% endblock %}
+</div>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

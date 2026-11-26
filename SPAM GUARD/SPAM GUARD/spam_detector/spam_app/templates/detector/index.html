@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spam Detector</title>
+</head>
+<body>
+    <h1>Spam Detector</h1>
+    <form method="post">
+        {% csrf_token %}
+        <textarea name="message" rows="5" cols="40" placeholder="Enter message here..."></textarea><br>
+        <button type="submit">Detect Spam</button>
+    </form>
+    
+    <h2>Recent Predictions</h2>
+    <ul>
+        {% for pred in predictions %}
+            <li>{{ pred.text }} - {% if pred.result == 'spam' %}SPAM{% else %}HAM{% endif %} ({{ pred.confidence }}%)</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

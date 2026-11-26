@@ -1,0 +1,322 @@
+{% extends 'spam_app/base.html' %}
+
+{% block title %}Result — SpamGuard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .result-layout {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-top: 12px;
+    }
+
+    /* ─── Verdict hero ─── */
+    .verdict-card {
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border: 1px solid;
+        position: relative;
+    }
+    .verdict-card.spam {
+        border-color: rgba(244,63,94,0.3);
+        background: linear-gradient(160deg, rgba(244,63,94,0.07) 0%, var(--bg-1) 60%);
+    }
+    .verdict-card.ham {
+        border-color: rgba(16,217,160,0.3);
+        background: linear-gradient(160deg, rgba(16,217,160,0.06) 0%, var(--bg-1) 60%);
+    }
+
+    /* Glow effect at top */
+    .verdict-glow {
+        position: absolute;
+        top: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 400px;
+        height: 200px;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+    }
+    .spam .verdict-glow { background: radial-gradient(circle, rgba(244,63,94,0.3) 0%, transparent 70%); }
+    .ham  .verdict-glow { background: radial-gradient(circle, rgba(16,217,160,0.2) 0%, transparent 70%); }
+
+    .verdict-inner {
+        padding: 40px 40px 36px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .verdict-eyebrow {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 16px;
+    }
+
+    .verdict-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .verdict-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px;
+    }
+    .spam .verdict-icon { background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); }
+    .ham  .verdict-icon { background: rgba(16,217,160,0.1);  border: 1px solid rgba(16,217,160,0.3); }
+
+    .verdict-word {
+        font-family: var(--display);
+        font-size: 52px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1;
+    }
+    .spam .verdict-word { color: var(--spam); }
+    .ham  .verdict-word { color: var(--ham); }
+
+    .verdict-sub {
+        font-size: 15px;
+        color: var(--text-2);
+        margin-bottom: 32px;
+    }
+
+    /* Probability meters */
+    .prob-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 0;
+    }
+    .prob-meter {
+        background: var(--bg);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 18px;
+    }
+    .prob-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .prob-value {
+        font-family: var(--display);
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+    .prob-value.spam-val { color: var(--spam); }
+    .prob-value.ham-val  { color: var(--ham); }
+
+    .prob-track {
+        height: 5px;
+        background: var(--bg-3);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .prob-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .prob-fill.spam-fill { background: var(--spam); box-shadow: 0 0 8px var(--spam-glow); }
+    .prob-fill.ham-fill  { background: var(--ham);  box-shadow: 0 0 8px var(--ham-glow); }
+
+    /* Confidence level chip */
+    .conf-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 6px 14px;
+        border-radius: 100px;
+        margin-top: 20px;
+        border: 1px solid;
+    }
+    .spam .conf-chip { background: rgba(244,63,94,0.08); color: var(--spam); border-color: rgba(244,63,94,0.2); }
+    .ham  .conf-chip { background: rgba(16,217,160,0.07); color: var(--ham); border-color: rgba(16,217,160,0.2); }
+
+    /* ─── Message body card ─── */
+    .msg-card {
+        background: var(--bg-1);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .msg-card-header {
+        padding: 14px 22px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+    }
+    .msg-body {
+        padding: 22px;
+        font-size: 14px;
+        color: var(--text-2);
+        line-height: 1.75;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    /* ─── Actions ─── */
+    .action-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .btn-action {
+        flex: 1;
+        min-width: 140px;
+        padding: 13px 20px;
+        border-radius: 10px;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: none;
+    }
+    .btn-action-outline {
+        background: transparent;
+        color: var(--text-2);
+        border: 1px solid var(--border-2);
+    }
+    .btn-action-outline:hover { background: var(--bg-2); color: var(--text); border-color: var(--border-2); }
+    .btn-action-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-action-primary:hover {
+        background: var(--accent-2);
+        box-shadow: 0 6px 28px rgba(14,165,233,0.4);
+        transform: translateY(-1px);
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-layout">
+    <!-- Verdict Card -->
+    <div class="verdict-card page-enter s1 {% if prediction.is_spam %}spam{% else %}ham{% endif %}">
+        <div class="verdict-glow"></div>
+        <div class="verdict-inner">
+            <div class="verdict-eyebrow">Analysis Complete</div>
+
+            <div class="verdict-badge">
+                <div class="verdict-icon">
+                    {% if prediction.is_spam %}🚫{% else %}✅{% endif %}
+                </div>
+                <div class="verdict-word">
+                    {% if prediction.is_spam %}SPAM{% else %}CLEAN{% endif %}
+                </div>
+            </div>
+
+            <div class="verdict-sub">
+                This message was classified as <strong>{% if prediction.is_spam %}spam{% else %}legitimate (ham){% endif %}</strong>
+                with {{ prediction.confidence }}% confidence.
+            </div>
+
+            <div class="prob-grid">
+                <div class="prob-meter">
+                    <div class="prob-label">
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        Spam Probability
+                    </div>
+                    <div class="prob-value spam-val">{{ prediction.spam_probability }}%</div>
+                    <div class="prob-track">
+                        <div class="prob-fill spam-fill" id="spam-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="prob-meter">
+                    <div class="prob-label">
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Ham Probability
+                    </div>
+                    <div class="prob-value ham-val">{{ prediction.ham_probability }}%</div>
+                    <div class="prob-track">
+                        <div class="prob-fill ham-fill" id="ham-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conf-chip">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                {{ prediction.confidence_level }} confidence · {{ prediction.confidence }}%
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Content -->
+    <div class="msg-card page-enter s2">
+        <div class="msg-card-header">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Analyzed Message
+        </div>
+        <div class="msg-body">{{ prediction.text }}</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-row page-enter s3">
+        <a href="{% url 'home' %}" class="btn-action btn-action-outline">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            Dashboard
+        </a>
+        <a href="{% url 'predict' %}" class="btn-action btn-action-primary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Analyze Another
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        document.getElementById('spam-fill').style.width = '{{ prediction.spam_probability }}%';
+        document.getElementById('ham-fill').style.width  = '{{ prediction.ham_probability }}%';
+    }, 200);
+});
+</script>
+{% endblock %}

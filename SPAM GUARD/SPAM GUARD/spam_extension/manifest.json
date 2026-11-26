@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "SpamGuard Gmail Extension",
+  "version": "2.0",
+  "description": "Auto-scans Gmail for spam and provides manual analysis via the SpamGuard API.",
+  "permissions": [
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://127.0.0.1:8001/*",
+    "http://localhost:8000/*",
+    "http://localhost:8001/*",
+    "https://mail.google.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SpamGuard Settings"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

@@ -1,0 +1,421 @@
+{% extends 'spam_app/base.html' %}
+
+{% block title %}Analyzer — SpamGuard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .analyzer-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        align-items: start;
+        padding-top: 12px;
+        padding-bottom: 20px;
+    }
+
+    /* ─── Analyzer panel ─── */
+    .analyzer-eyebrow {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 24px;
+    }
+    .analyzer-title {
+        font-family: var(--display);
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        color: var(--text);
+        margin-bottom: 28px;
+    }
+
+    textarea.msg-input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        color: var(--text);
+        font-family: var(--body);
+        font-size: 15px;
+        line-height: 1.65;
+        padding: 18px 20px;
+        resize: vertical;
+        min-height: 200px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea.msg-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    textarea.msg-input::placeholder { color: var(--text-3); font-size: 14px; }
+
+    .input-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        margin-bottom: 16px;
+    }
+    .char-count {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-3);
+    }
+    .char-count span { color: var(--text-2); }
+
+    .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 20px var(--accent-glow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-submit:hover {
+        background: var(--accent-2);
+        box-shadow: 0 6px 28px rgba(14,165,233,0.4);
+        transform: translateY(-1px);
+    }
+    .btn-submit:active { transform: none; }
+
+    /* Error state */
+    .error-banner {
+        background: rgba(244,63,94,0.08);
+        border: 1px solid rgba(244,63,94,0.2);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--spam);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* ─── Quick examples ─── */
+    .examples-panel {
+        margin-top: 28px;
+        padding-top: 28px;
+        border-top: 1px solid var(--border);
+    }
+    .examples-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 12px;
+    }
+    .example-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .example-chip {
+        padding: 10px 14px;
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        background: var(--bg-2);
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: left;
+    }
+    .example-chip:hover { background: var(--bg-3); border-color: var(--border-2); }
+    .chip-type {
+        font-family: var(--mono);
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+    .chip-type.spam { color: var(--spam); }
+    .chip-type.ham  { color: var(--ham); }
+    .chip-desc {
+        font-size: 12px;
+        color: var(--text-2);
+    }
+    .example-chip.spam-chip:hover { border-color: rgba(244,63,94,0.3); }
+    .example-chip.ham-chip:hover  { border-color: rgba(16,217,160,0.3); }
+
+    /* ─── Info sidebar ─── */
+    .info-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .info-card {
+        background: var(--bg-1);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .info-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .info-card-body { padding: 18px; }
+
+    /* Algorithm steps */
+    .algo-step {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .algo-step:last-child { margin-bottom: 0; }
+    .algo-num {
+        flex-shrink: 0;
+        width: 24px; height: 24px;
+        border-radius: 6px;
+        background: rgba(14,165,233,0.1);
+        border: 1px solid rgba(14,165,233,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-top: 1px;
+    }
+    .algo-name {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 3px;
+        letter-spacing: 0.3px;
+    }
+    .algo-desc {
+        font-size: 12px;
+        color: var(--text-3);
+        line-height: 1.5;
+    }
+
+    /* Tips */
+    .tip-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--text-2);
+        line-height: 1.5;
+    }
+    .tip-row:last-child { margin-bottom: 0; }
+    .tip-icon {
+        flex-shrink: 0;
+        font-size: 14px;
+        margin-top: 1px;
+    }
+
+    @media (max-width: 768px) {
+        .analyzer-layout { grid-template-columns: 1fr; }
+        .example-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analyzer-layout">
+
+    <!-- Left: Analyzer -->
+    <div class="page-enter s1">
+        <div class="card card-pad">
+            <div class="analyzer-eyebrow">Message Analyzer</div>
+            <div class="analyzer-title">Scan for Threats</div>
+
+            {% if error %}
+            <div class="error-banner">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" id="classify-form">
+                {% csrf_token %}
+                <textarea
+                    name="text"
+                    id="msg-input"
+                    class="msg-input"
+                    placeholder="Paste your email or message here…&#10;&#10;The analyzer uses Naive Bayes classification with TF-IDF vectorization to determine the probability of spam."
+                    maxlength="5000"
+                    oninput="updateCount(this)"
+                    required></textarea>
+
+                <div class="input-footer">
+                    <span class="char-count"><span id="char-num">0</span> / 5000 characters</span>
+                    <span class="char-count">Press Ctrl+Enter to submit</span>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submit-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Run Analysis
+                </button>
+            </form>
+
+            <div class="examples-panel">
+                <div class="examples-label">Try a sample</div>
+                <div class="example-grid">
+                    <button class="example-chip spam-chip" onclick="setExample('spam1')">
+                        <div class="chip-type spam">Spam</div>
+                        <div class="chip-desc">Prize winner scam</div>
+                    </button>
+                    <button class="example-chip spam-chip" onclick="setExample('spam2')">
+                        <div class="chip-type spam">Spam</div>
+                        <div class="chip-desc">Nigerian prince</div>
+                    </button>
+                    <button class="example-chip spam-chip" onclick="setExample('spam3')">
+                        <div class="chip-type spam">Spam</div>
+                        <div class="chip-desc">Account warning</div>
+                    </button>
+                    <button class="example-chip ham-chip" onclick="setExample('ham1')">
+                        <div class="chip-type ham">Ham</div>
+                        <div class="chip-desc">Meeting invite</div>
+                    </button>
+                    <button class="example-chip ham-chip" onclick="setExample('ham2')">
+                        <div class="chip-type ham">Ham</div>
+                        <div class="chip-desc">Shipping update</div>
+                    </button>
+                    <button class="example-chip ham-chip" onclick="setExample('ham3')">
+                        <div class="chip-type ham">Ham</div>
+                        <div class="chip-desc">Project email</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Sidebar -->
+    <div class="info-sidebar page-enter s2">
+
+        <div class="info-card">
+            <div class="info-card-header">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                How it works
+            </div>
+            <div class="info-card-body">
+                <div class="algo-step">
+                    <div class="algo-num">1</div>
+                    <div>
+                        <div class="algo-name">Tokenization</div>
+                        <div class="algo-desc">Text is split into tokens and normalized</div>
+                    </div>
+                </div>
+                <div class="algo-step">
+                    <div class="algo-num">2</div>
+                    <div>
+                        <div class="algo-name">TF-IDF Vectorization</div>
+                        <div class="algo-desc">Tokens weighted by term frequency × inverse document frequency</div>
+                    </div>
+                </div>
+                <div class="algo-step">
+                    <div class="algo-num">3</div>
+                    <div>
+                        <div class="algo-name">Naive Bayes Classification</div>
+                        <div class="algo-desc">Posterior probability computed for spam vs. ham</div>
+                    </div>
+                </div>
+                <div class="algo-step">
+                    <div class="algo-num">4</div>
+                    <div>
+                        <div class="algo-name">Confidence Score</div>
+                        <div class="algo-desc">Normalized probability returned as a percentage</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-card-header">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                Tips for best results
+            </div>
+            <div class="info-card-body">
+                <div class="tip-row">
+                    <div class="tip-icon">📋</div>
+                    <div>Paste the full email body including subject lines for higher accuracy</div>
+                </div>
+                <div class="tip-row">
+                    <div class="tip-icon">🔗</div>
+                    <div>URLs and domain names are strong spam indicators — keep them in</div>
+                </div>
+                <div class="tip-row">
+                    <div class="tip-icon">📏</div>
+                    <div>Longer texts give the model more signal and improve confidence</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const EXAMPLES = {
+    spam1: "CONGRATULATIONS! You've won a $1,000,000 lottery prize! Click here IMMEDIATELY to claim your reward before it expires at midnight tonight!",
+    spam2: "Dear Trusted Friend, I am Prince Adeyemi of Nigeria needing your assistance to transfer $50 million. You will keep 40%. Please reply with your bank details urgently.",
+    spam3: "URGENT: Your account has been compromised! Verify your personal details NOW by clicking this secure link or your access will be permanently suspended within 24 hours.",
+    ham1:  "Hi Sarah, would it be possible to move Thursday's 2pm sync to Friday? I have a conflict with a client call. Happy to do 10am or anytime after 3pm. Let me know.",
+    ham2:  "Your order #98234 has shipped and is expected to arrive by Thursday, May 8th. You can track your package using the link below or reply to this email with any questions.",
+    ham3:  "Please find the updated project requirements attached as discussed in yesterday's meeting. Could you review them before our sprint planning session on Monday at 11am?",
+};
+
+function setExample(key) {
+    const ta = document.getElementById('msg-input');
+    ta.value = EXAMPLES[key];
+    updateCount(ta);
+    ta.focus();
+}
+
+function updateCount(ta) {
+    document.getElementById('char-num').textContent = ta.value.length;
+}
+
+document.getElementById('classify-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 0.7s linear infinite">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        Analyzing...
+    `;
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+});
+
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        document.getElementById('classify-form').submit();
+    }
+});
+
+// Inline spin keyframe for the loading state
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+</script>
+{% endblock %}
